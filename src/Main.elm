@@ -9,6 +9,7 @@ import Http
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -32,7 +33,8 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Loading
     , Http.get
-        { url = "https://elm-lang.org/assets/public-opinion.txt"
+        -- { url = "https://elm-lang.org/assets/public-opinion.txt"
+        { url = "https://api.kanye.rest"
         , expect = Http.expectString GotText
         }
     )
