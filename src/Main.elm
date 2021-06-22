@@ -1,8 +1,11 @@
-module Main exposing (Model(..), Msg(..), init, main, subscriptions, update, view)
+module Main exposing (Msg(..), init, main, subscriptions, update, view)
 
 import Browser
-import Html exposing (Html, pre, text)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http
+import Json.Decode exposing (Decoder, field, string)
 
 
 
@@ -23,7 +26,11 @@ main =
 -- MODEL
 
 
-type Model
+type alias Model =
+    { quote : Quote, favoritesList : List String }
+
+
+type Quote
     = Failure
     | Loading
     | Success String
@@ -31,12 +38,8 @@ type Model
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Loading
-    , Http.get
-        -- { url = "https://elm-lang.org/assets/public-opinion.txt"
-        { url = "https://api.kanye.rest"
-        , expect = Http.expectString GotText
-        }
+    ( Model Loading []
+    , getNewQuote
     )
 
 
@@ -45,19 +48,27 @@ init _ =
 
 
 type Msg
-    = GotText (Result Http.Error String)
+    = GetNewQuote
+    | GotQuote (Result Http.Error String)
+    | AddFavorite String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotText result ->
+        GetNewQuote ->
+            ( { model | quote = Loading }, getNewQuote )
+
+        GotQuote result ->
             case result of
-                Ok fullText ->
-                    ( Success fullText, Cmd.none )
+                Ok url ->
+                    ( { model | quote = Success url }, Cmd.none )
 
                 Err _ ->
-                    ( Failure, Cmd.none )
+                    ( { model | quote = Failure }, Cmd.none )
+
+        AddFavorite favorite ->
+            ( { model | favoritesList = favorite :: model.favoritesList }, Cmd.none )
 
 
 
@@ -75,12 +86,60 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    case model of
+    div []
+        [ displayText model
+        , getQuoteBtn
+        , favoritesList model
+        ]
+
+
+favoritesList : Model -> Html Msg
+favoritesList model =
+    case model.favoritesList of
+        [] ->
+            text "no favorites yet"
+
+        list ->
+            ul [] (List.map (\quote -> li [] [ text quote ]) list)
+
+
+displayText : Model -> Html Msg
+displayText model =
+    case model.quote of
         Failure ->
-            text "I was unable to load your book."
+            div []
+                [ text "Could not load a new quote :(" ]
 
         Loading ->
-            text "Loading..."
+            div []
+                [ text "Loading..." ]
 
-        Success fullText ->
-            pre [] [ text fullText ]
+        Success quoteText ->
+            div []
+                [ text quoteText
+                , button [ onClick (AddFavorite quoteText), style "display" "block" ] [ text "add this quote to favorites" ]
+                ]
+
+
+getQuoteBtn : Html Msg
+getQuoteBtn =
+    button [ onClick GetNewQuote, style "display" "block" ]
+        [ text "get new quote"
+        ]
+
+
+
+-- HTTP
+
+
+getNewQuote : Cmd Msg
+getNewQuote =
+    Http.get
+        { url = "https://api.kanye.rest"
+        , expect = Http.expectJson GotQuote quoteDecoder
+        }
+
+
+quoteDecoder : Decoder String
+quoteDecoder =
+    field "quote" string
