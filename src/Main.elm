@@ -149,7 +149,7 @@ displayText model =
                     button [ onClick (AddFavorite quoteText), style "display" "block" ] [ text "add this quote to favorites" ]
 
                   else
-                    button [ onClick (AddFavorite quoteText), style "display" "block", attribute "disabled" "" ] [ text "this quote is already added!" ]
+                    button [ style "display" "block", attribute "disabled" "" ] [ text "this quote is already added!" ]
                 ]
 
 
