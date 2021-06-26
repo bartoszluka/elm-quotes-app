@@ -4,6 +4,8 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Keyed as Keyed
+import Html.Lazy exposing (lazy, lazy2)
 import Http
 import Json.Decode exposing (Decoder, field, string)
 
@@ -27,10 +29,19 @@ main =
 
 
 type alias Model =
-    { quote : Quote, favoritesList : List String }
+    { quote : FetchedQuote
+    , favoritesList : List Quote
+    , uid : Int
+    }
 
 
-type Quote
+type alias Quote =
+    { id : Int
+    , content : String
+    }
+
+
+type FetchedQuote
     = Failure
     | Loading
     | Success String
@@ -38,7 +49,7 @@ type Quote
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model Loading []
+    ( Model Loading [] 0
     , getNewQuote
     )
 
@@ -51,6 +62,7 @@ type Msg
     = GetNewQuote
     | GotQuote (Result Http.Error String)
     | AddFavorite String
+    | RemoveFromFavorites Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,7 +80,10 @@ update msg model =
                     ( { model | quote = Failure }, Cmd.none )
 
         AddFavorite favorite ->
-            ( { model | favoritesList = favorite :: model.favoritesList }, Cmd.none )
+            ( { model | favoritesList = Quote model.uid favorite :: model.favoritesList, uid = model.uid + 1 }, Cmd.none )
+
+        RemoveFromFavorites id ->
+            ( { model | favoritesList = List.filter (\fav -> fav.id /= id) model.favoritesList }, Cmd.none )
 
 
 
@@ -100,7 +115,20 @@ favoritesList model =
             text "no favorites yet"
 
         list ->
-            ul [] (List.map (\quote -> li [] [ text quote ]) list)
+            Keyed.ul [] (List.map displayKeyedQuote list)
+
+
+displayKeyedQuote : Quote -> ( String, Html Msg )
+displayKeyedQuote quote =
+    ( String.fromInt quote.id, lazy displayQuote quote )
+
+
+displayQuote : Quote -> Html Msg
+displayQuote quote =
+    li []
+        [ text <| String.fromInt quote.id ++ ": " ++ quote.content
+        , button [ onClick (RemoveFromFavorites quote.id) ] [ text "remove from favorites" ]
+        ]
 
 
 displayText : Model -> Html Msg
@@ -117,7 +145,11 @@ displayText model =
         Success quoteText ->
             div []
                 [ text quoteText
-                , button [ onClick (AddFavorite quoteText), style "display" "block" ] [ text "add this quote to favorites" ]
+                , if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
+                    button [ onClick (AddFavorite quoteText), style "display" "block" ] [ text "add this quote to favorites" ]
+
+                  else
+                    button [ onClick (AddFavorite quoteText), style "display" "block", attribute "disabled" "" ] [ text "this quote is already added!" ]
                 ]
 
 
