@@ -51,9 +51,7 @@ type alias Model =
 
 
 type alias Quote =
-    { id : Int
-    , content : String
-    }
+    { id : Int, content : String }
 
 
 type FetchedQuote
@@ -64,7 +62,10 @@ type FetchedQuote
 
 emptyModel : Model
 emptyModel =
-    { quote = Loading, favoritesList = [], uid = 0 }
+    { quote = Loading
+    , favoritesList = []
+    , uid = 0
+    }
 
 
 maybeStorage : Maybe { uid : Int, favoritesList : List Quote } -> Maybe Model
