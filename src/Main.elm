@@ -1,4 +1,4 @@
-module Main exposing (Msg(..), init, main, subscriptions, update, view)
+port module Main exposing (Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Html exposing (..)
@@ -8,20 +8,35 @@ import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy)
 import Http
 import Json.Decode exposing (Decoder, field, string)
+import Json.Encode as E
 
 
 
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program (Maybe { uid : Int, favoritesList : List Quote }) Model Msg
 main =
     Browser.document
         { init = init
-        , update = update
+        , update = updateWithStorage
         , subscriptions = subscriptions
         , view = \model -> { title = "Elm • Kanye's quotes", body = [ view model ] }
         }
+
+
+port saveToStorage : E.Value -> Cmd msg
+
+
+updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
+updateWithStorage msg oldModel =
+    let
+        ( newModel, cmds ) =
+            update msg oldModel
+    in
+    ( newModel
+    , Cmd.batch [ saveToStorage (encodeModel newModel), cmds ]
+    )
 
 
 
@@ -47,15 +62,21 @@ type FetchedQuote
     | Success String
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Model Loading [] 0
+emptyModel : Model
+emptyModel =
+    { quote = Loading, favoritesList = [], uid = 0 }
+
+
+maybeStorage : Maybe { uid : Int, favoritesList : List Quote } -> Maybe Model
+maybeStorage maybeModel =
+    Maybe.map (\model -> Model Loading model.favoritesList model.uid) maybeModel
+
+
+init : Maybe { uid : Int, favoritesList : List Quote } -> ( Model, Cmd Msg )
+init storageModel =
+    ( Maybe.withDefault emptyModel (maybeStorage storageModel)
     , getNewQuote
     )
-
-
-
--- UPDATE
 
 
 type Msg
@@ -63,6 +84,19 @@ type Msg
     | GotQuote (Result Http.Error String)
     | AddFavorite String
     | RemoveFromFavorites Int
+
+
+encodeModel : Model -> E.Value
+encodeModel model =
+    E.object
+        [ ( "uid", E.int model.uid )
+        , ( "favoritesList", E.list encodeQuote model.favoritesList )
+        ]
+
+
+encodeQuote : Quote -> E.Value
+encodeQuote quote =
+    E.object [ ( "id", E.int quote.id ), ( "content", E.string quote.content ) ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

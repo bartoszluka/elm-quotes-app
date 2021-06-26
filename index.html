@@ -9,13 +9,13 @@
 
   <body>
     <script type="text/javascript">
-      // var storedState = localStorage.getItem('elm-todo-save');
-      // var startingState = storedState ? JSON.parse(storedState) : null;
-      // var app = Elm.Main.init({ flags: startingState });
-      // app.ports.setStorage.subscribe(function (state) {
-      //   localStorage.setItem('elm-todo-save', JSON.stringify(state));
-      // });
-      var app = Elm.Main.init();
+      var storedState = localStorage.getItem('elm-quotes');
+      var startingState = storedState ? JSON.parse(storedState) : null;
+
+      var app = Elm.Main.init({ flags: startingState });
+      app.ports.saveToStorage.subscribe(function (state) {
+        localStorage.setItem('elm-quotes', JSON.stringify(state));
+      });
     </script>
   </body>
 </html>
