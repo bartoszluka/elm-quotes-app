@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
-import Html.Lazy exposing (lazy, lazy2)
+import Html.Lazy exposing (lazy)
 import Http
 import Json.Decode exposing (Decoder, field, string)
 
@@ -104,7 +104,7 @@ view model =
     div []
         [ displayText model
         , getQuoteBtn
-        , favoritesList model
+        , lazy favoritesList model
         ]
 
 
