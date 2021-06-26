@@ -14,11 +14,11 @@ import Json.Decode exposing (Decoder, field, string)
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.document
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = \model -> { title = "Elm • Kanye's quotes", body = [ view model ] }
         }
 
 
