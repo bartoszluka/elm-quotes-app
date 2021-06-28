@@ -1,4 +1,4 @@
-port module Main exposing (Msg(..), init, main, subscriptions, update, view)
+port module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Element exposing (..)
@@ -12,7 +12,7 @@ import Element.Lazy exposing (lazy)
 import Element.Region as Region
 import Html exposing (Html)
 import Http
-import Json.Decode exposing (Decoder, field, string)
+import Json.Decode as D
 import Json.Encode as E
 
 
@@ -20,7 +20,11 @@ import Json.Encode as E
 -- MAIN
 
 
-main : Program (Maybe { uid : Int, favoritesList : List Quote }) Model Msg
+type alias QuotesList =
+    { uid : Int, favoritesList : List Quote }
+
+
+main : Program E.Value Model Msg
 main =
     Browser.document
         { init = init
@@ -78,9 +82,14 @@ maybeStorage maybeModel =
     Maybe.map (\model -> Model Loading model.favoritesList model.uid) maybeModel
 
 
-init : Maybe { uid : Int, favoritesList : List Quote } -> ( Model, Cmd Msg )
+init : E.Value -> ( Model, Cmd Msg )
 init storageModel =
-    ( Maybe.withDefault emptyModel (maybeStorage storageModel)
+    ( case D.decodeValue storageDecoder storageModel of
+        Ok model ->
+            Model Loading model.favoritesList model.uid
+
+        Err _ ->
+            emptyModel
     , getNewQuote
     )
 
@@ -218,6 +227,20 @@ getQuoteBtn =
         }
 
 
+storageDecoder : D.Decoder QuotesList
+storageDecoder =
+    D.map2 QuotesList
+        (D.field "uid" D.int)
+        (D.field "favoritesList" (D.list decodeQuote))
+
+
+decodeQuote : D.Decoder Quote
+decodeQuote =
+    D.map2 Quote
+        (D.field "id" D.int)
+        (D.field "quote" D.string)
+
+
 
 -- HTTP
 
@@ -230,6 +253,6 @@ getNewQuote =
         }
 
 
-quoteDecoder : Decoder String
+quoteDecoder : D.Decoder String
 quoteDecoder =
-    field "quote" string
+    D.field "quote" D.string
