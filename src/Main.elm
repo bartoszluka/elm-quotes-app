@@ -1,11 +1,16 @@
 port module Main exposing (Msg(..), init, main, subscriptions, update, view)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
-import Html.Keyed as Keyed
-import Html.Lazy exposing (lazy)
+import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Events exposing (..)
+import Element.Font as Font
+import Element.Input as Input
+import Element.Keyed as Keyed
+import Element.Lazy exposing (lazy)
+import Element.Region as Region
+import Html exposing (Html)
 import Http
 import Json.Decode exposing (Decoder, field, string)
 import Json.Encode as E
@@ -136,63 +141,81 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ displayText model
-        , getQuoteBtn
-        , lazy favoritesList model
-        ]
+    layout []
+        (column []
+            [ displayText model
+            , getQuoteBtn
+            , lazy favoritesList model
+            ]
+        )
 
 
-favoritesList : Model -> Html Msg
+displayText : Model -> Element Msg
+displayText model =
+    case model.quote of
+        Failure ->
+            el [] (text "Could not load a new quote :(")
+
+        Loading ->
+            el [] (text "Loading...")
+
+        Success quoteText ->
+            row []
+                [ text quoteText
+                , if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
+                    Input.button []
+                        { onPress = Just (AddFavorite quoteText)
+                        , label = text "add this quote to favorites"
+                        }
+
+                  else
+                    let
+                        grey =
+                            Element.rgb 80 80 80
+                    in
+                    Input.button
+                        [ Background.color grey
+                        , Region.description
+                            "A publish date is required before saving a blogpost."
+                        ]
+                        { onPress = Nothing
+                        , label = text "this quote has been already added!"
+                        }
+                ]
+
+
+favoritesList : Model -> Element Msg
 favoritesList model =
     case model.favoritesList of
         [] ->
             text "no favorites yet"
 
         list ->
-            Keyed.ul [] (List.map displayKeyedQuote list)
+            Keyed.column [] (List.map displayKeyedQuote list)
 
 
-displayKeyedQuote : Quote -> ( String, Html Msg )
+displayKeyedQuote : Quote -> ( String, Element Msg )
 displayKeyedQuote quote =
     ( String.fromInt quote.id, lazy displayQuote quote )
 
 
-displayQuote : Quote -> Html Msg
+displayQuote : Quote -> Element Msg
 displayQuote quote =
-    li []
+    column []
         [ text <| String.fromInt quote.id ++ ": " ++ quote.content
-        , button [ onClick (RemoveFromFavorites quote.id) ] [ text "remove from favorites" ]
+        , Input.button []
+            { onPress = Just (RemoveFromFavorites quote.id)
+            , label = text "remove from favorites"
+            }
         ]
 
 
-displayText : Model -> Html Msg
-displayText model =
-    case model.quote of
-        Failure ->
-            div []
-                [ text "Could not load a new quote :(" ]
-
-        Loading ->
-            div []
-                [ text "Loading..." ]
-
-        Success quoteText ->
-            div []
-                [ text quoteText
-                , if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
-                    button [ onClick (AddFavorite quoteText), style "display" "block" ] [ text "add this quote to favorites" ]
-
-                  else
-                    button [ style "display" "block", attribute "disabled" "" ] [ text "this quote is already added!" ]
-                ]
-
-
-getQuoteBtn : Html Msg
+getQuoteBtn : Element Msg
 getQuoteBtn =
-    button [ onClick GetNewQuote, style "display" "block" ]
-        [ text "get new quote"
-        ]
+    Input.button []
+        { onPress = Just GetNewQuote
+        , label = text "get new quote"
+        }
 
 
 
