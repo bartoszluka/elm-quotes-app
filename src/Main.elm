@@ -1,4 +1,4 @@
-port module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
+port module Main exposing (Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Element exposing (..)
