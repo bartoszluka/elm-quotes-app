@@ -77,11 +77,6 @@ emptyModel =
     }
 
 
-maybeStorage : Maybe { uid : Int, favoritesList : List Quote } -> Maybe Model
-maybeStorage maybeModel =
-    Maybe.map (\model -> Model Loading model.favoritesList model.uid) maybeModel
-
-
 init : E.Value -> ( Model, Cmd Msg )
 init storageModel =
     ( case D.decodeValue storageDecoder storageModel of
@@ -172,15 +167,15 @@ displayText model =
             row []
                 [ text quoteText
                 , if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
-                    Input.button []
+                    Input.button [ Border.solid ]
                         { onPress = Just (AddFavorite quoteText)
-                        , label = text "add this quote to favorites"
+                        , label = text "Add this quote to favorites"
                         }
 
                   else
                     let
                         grey =
-                            Element.rgb 80 80 80
+                            Element.rgb255 80 80 80
                     in
                     Input.button
                         [ Background.color grey
@@ -188,7 +183,7 @@ displayText model =
                             "A publish date is required before saving a blogpost."
                         ]
                         { onPress = Nothing
-                        , label = text "this quote has been already added!"
+                        , label = text "This quote has been already added!"
                         }
                 ]
 

@@ -1,5 +1,5 @@
-OUTJS = elm.js
-OUTMIN = elm.min.js
+OUTJS = main.js
+OUTMIN = main.min.js
  
 all: js
 js:
