@@ -3,13 +3,12 @@ port module Main exposing (Msg(..), init, main, subscriptions, update, view)
 import Browser
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
+import Element.Border as Border exposing (rounded)
 import Element.Events exposing (..)
-import Element.Font as Font
+import Element.Font as Font exposing (Font)
 import Element.Input as Input
 import Element.Keyed as Keyed
 import Element.Lazy exposing (lazy)
-import Element.Region as Region
 import Html exposing (Html)
 import Http
 import Json.Decode as D
@@ -113,7 +112,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GetNewQuote ->
-            ( { model | quote = Loading }, getNewQuote )
+            ( model, getNewQuote )
 
         GotQuote result ->
             case result of
@@ -145,13 +144,62 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    layout []
-        (column []
-            [ displayText model
+    layout [ Background.color darkBackground ]
+        (column
+            [ Font.color white
+            , centerX
+            , spacing 10
+            ]
+            [ title
+            , displayText model
             , getQuoteBtn
             , lazy favoritesList model
             ]
         )
+
+
+title : Element Msg
+title =
+    el [ Font.size 40, centerX ] (text "Kanye's quotes")
+
+
+gray =
+    rgb255 216 222 233
+
+
+lighterBg : Color
+lighterBg =
+    rgb255 76 86 106
+
+
+white : Color
+white =
+    rgb255 236 239 244
+
+
+darkBackground : Color
+darkBackground =
+    rgb255 46 52 64
+
+
+darkBlue : Color
+darkBlue =
+    rgb255 94 129 172
+
+
+grayBlue : Color
+grayBlue =
+    rgb255 129 161 193
+
+
+lightBlue : Color
+lightBlue =
+    rgb255 136 192 208
+
+
+mint : Color
+mint =
+    rgb255 143 188 187
 
 
 displayText : Model -> Element Msg
@@ -164,26 +212,38 @@ displayText model =
             el [] (text "Loading...")
 
         Success quoteText ->
-            row []
-                [ text quoteText
+            row [ spacing 20, width fill ]
+                [ paragraph
+                    [ width (fill |> maximum 700)
+                    , Border.rounded 4
+                    , Border.color gray
+                    , Border.solid
+                    , Border.width 1
+                    , alignLeft
+                    , padding 5
+                    ]
+                    [ text quoteText ]
                 , if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
-                    Input.button [ Border.solid ]
+                    Input.button
+                        [ Background.color lightBlue
+                        , Font.color darkBackground
+                        , alignRight
+                        , rounded 4
+                        , padding 4
+                        ]
                         { onPress = Just (AddFavorite quoteText)
-                        , label = text "Add this quote to favorites"
+                        , label = text "Add to favorites"
                         }
 
                   else
-                    let
-                        grey =
-                            Element.rgb255 80 80 80
-                    in
                     Input.button
-                        [ Background.color grey
-                        , Region.description
-                            "A publish date is required before saving a blogpost."
+                        [ Background.color lighterBg
+                        , rounded 4
+                        , padding 4
+                        , width <| maximum 200 <| fill
                         ]
                         { onPress = Nothing
-                        , label = text "This quote has been already added!"
+                        , label = paragraph [] [ text "This quote has been already added!" ]
                         }
                 ]
 
@@ -192,10 +252,10 @@ favoritesList : Model -> Element Msg
 favoritesList model =
     case model.favoritesList of
         [] ->
-            text "no favorites yet"
+            el [] (text "no favorites yet")
 
         list ->
-            Keyed.column [] (List.map displayKeyedQuote list)
+            Keyed.column [ spacing 10 ] (List.map displayKeyedQuote list)
 
 
 displayKeyedQuote : Quote -> ( String, Element Msg )
@@ -205,9 +265,25 @@ displayKeyedQuote quote =
 
 displayQuote : Quote -> Element Msg
 displayQuote quote =
-    column []
-        [ text <| String.fromInt quote.id ++ ": " ++ quote.content
-        , Input.button []
+    row
+        [ spacing 20
+        , width fill
+        , Border.width 1
+        , Border.rounded 4
+        ]
+        [ paragraph
+            [ width (fill |> maximum 700)
+            , Border.rounded 4
+            , Border.color gray
+            , Border.solid
+            , alignLeft
+            ]
+            [ text quote.content ]
+        , Input.button
+            [ Background.color grayBlue
+            , padding 4
+            , rounded 4
+            ]
             { onPress = Just (RemoveFromFavorites quote.id)
             , label = text "remove from favorites"
             }
@@ -216,7 +292,14 @@ displayQuote quote =
 
 getQuoteBtn : Element Msg
 getQuoteBtn =
-    Input.button []
+    Input.button
+        [ Background.color darkBlue
+        , Font.color darkBackground
+        , alignLeft
+        , rounded 4
+        , padding 4
+        , Font.size 30
+        ]
         { onPress = Just GetNewQuote
         , label = text "get new quote"
         }
@@ -233,7 +316,7 @@ decodeQuote : D.Decoder Quote
 decodeQuote =
     D.map2 Quote
         (D.field "id" D.int)
-        (D.field "quote" D.string)
+        (D.field "content" D.string)
 
 
 
