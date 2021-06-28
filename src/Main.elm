@@ -4,7 +4,6 @@ import Browser
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
-import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Element.Keyed as Keyed
@@ -20,7 +19,9 @@ import Json.Encode as E
 
 
 type alias QuotesList =
-    { uid : Int, favoritesList : List Quote }
+    { uid : Int
+    , favoritesList : List Quote
+    }
 
 
 main : Program E.Value Model Msg
@@ -59,7 +60,9 @@ type alias Model =
 
 
 type alias Quote =
-    { id : Int, content : String }
+    { id : Int
+    , content : String
+    }
 
 
 type FetchedQuote
@@ -163,6 +166,7 @@ title =
     el [ Font.size 40, centerX ] (text "Kanye's quotes")
 
 
+gray : Color
 gray =
     rgb255 216 222 233
 
