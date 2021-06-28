@@ -5,7 +5,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border exposing (rounded)
 import Element.Events exposing (..)
-import Element.Font as Font exposing (Font)
+import Element.Font as Font
 import Element.Input as Input
 import Element.Keyed as Keyed
 import Element.Lazy exposing (lazy)
@@ -280,7 +280,7 @@ displayQuote quote =
             ]
             [ text quote.content ]
         , Input.button
-            [ Background.color grayBlue
+            [ Background.color mint
             , padding 4
             , rounded 4
             ]
