@@ -145,13 +145,22 @@ subscriptions _ =
 -- VIEW
 
 
+edges =
+    { top = 0
+    , right = 0
+    , bottom = 0
+    , left = 0
+    }
+
+
 view : Model -> Html Msg
 view model =
     layout [ Background.color darkBackground ]
         (column
             [ Font.color white
             , centerX
-            , spacing 10
+            , spacing 40
+            , paddingXY 150 100
             ]
             [ title
             , displayText model
@@ -216,40 +225,53 @@ displayText model =
             el [] (text "Loading...")
 
         Success quoteText ->
-            row [ spacing 20, width fill ]
+            column
+                [ spacing 20, centerX, width fill ]
                 [ paragraph
-                    [ width (fill |> maximum 700)
-                    , Border.rounded 4
+                    [ height <| px 140
+                    , Border.rounded 8
                     , Border.color gray
                     , Border.solid
                     , Border.width 1
-                    , alignLeft
-                    , padding 5
+                    , Font.size 29
+                    , Font.italic
+                    , padding 20
                     ]
                     [ text quoteText ]
-                , if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
-                    Input.button
-                        [ Background.color lightBlue
-                        , Font.color darkBackground
-                        , alignRight
-                        , rounded 4
-                        , padding 4
-                        ]
-                        { onPress = Just (AddFavorite quoteText)
-                        , label = text "Add to favorites"
-                        }
-
-                  else
-                    Input.button
-                        [ Background.color lighterBg
-                        , rounded 4
-                        , padding 4
-                        , width <| maximum 200 <| fill
-                        ]
-                        { onPress = Nothing
-                        , label = paragraph [] [ text "This quote has been already added!" ]
-                        }
+                , addToFavoritesButton quoteText model
                 ]
+
+
+addToFavoritesButton : String -> Model -> Element Msg
+addToFavoritesButton quoteText model =
+    let
+        btn : List (Attribute msg) -> { onPress : Maybe msg, label : Element msg } -> Element msg
+        btn attributes content =
+            Input.button
+                ([ rounded 7
+                 , padding 15
+                 , alignRight
+                 ]
+                    ++ attributes
+                )
+                content
+    in
+    if List.filter (\q -> quoteText == q.content) model.favoritesList |> List.isEmpty then
+        btn
+            [ Background.color lightBlue
+            , Font.color darkBackground
+            ]
+            { onPress = Just (AddFavorite quoteText)
+            , label = text "Add to favorites"
+            }
+
+    else
+        btn
+            [ Background.color lighterBg
+            ]
+            { onPress = Nothing
+            , label = text "already added!"
+            }
 
 
 favoritesList : Model -> Element Msg
@@ -259,7 +281,12 @@ favoritesList model =
             el [] (text "no favorites yet")
 
         list ->
-            Keyed.column [ spacing 10 ] (List.map displayKeyedQuote list)
+            Keyed.column
+                [ spacing 20
+                , Border.width 1
+                , Border.rounded 7
+                ]
+                (List.map displayKeyedQuote list)
 
 
 displayKeyedQuote : Quote -> ( String, Element Msg )
@@ -272,21 +299,20 @@ displayQuote quote =
     row
         [ spacing 20
         , width fill
-        , Border.width 1
-        , Border.rounded 4
+        , padding 20
         ]
         [ paragraph
-            [ width (fill |> maximum 700)
-            , Border.rounded 4
+            [ Border.rounded 4
             , Border.color gray
             , Border.solid
             , alignLeft
             ]
             [ text quote.content ]
         , Input.button
-            [ Background.color mint
-            , padding 4
-            , rounded 4
+            [ Background.color <| rgb255 191 97 106
+            , Font.color darkBackground
+            , padding 12
+            , rounded 7
             ]
             { onPress = Just (RemoveFromFavorites quote.id)
             , label = text "remove from favorites"
@@ -298,10 +324,9 @@ getQuoteBtn : Element Msg
 getQuoteBtn =
     Input.button
         [ Background.color darkBlue
-        , Font.color darkBackground
         , alignLeft
-        , rounded 4
-        , padding 4
+        , rounded 7
+        , padding 15
         , Font.size 30
         ]
         { onPress = Just GetNewQuote
